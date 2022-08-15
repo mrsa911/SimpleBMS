@@ -1,0 +1,139 @@
+#include <SPI.h>
+#include <SD.h>
+
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+#define ONE_WIRE_BUS 10
+
+OneWire oneWire(ONE_WIRE_BUS);
+
+DallasTemperature sensors(&oneWire);
+
+const int chipSelect = 10;
+
+unsigned long myTime;
+
+double Tsense1 = analogRead(A0);
+double Tsense2 = analogRead(A1);
+double Tsense3 = analogRead(A2);
+double Tsense4 = analogRead(A3);
+double Tsense5 = analogRead(A4);
+double Tsense6 = analogRead(A5);
+
+void setup() {
+  sensors.begin();
+  sensors.setResolution(11);
+  Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+  Serial.print("Initializing SD card...");
+  // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Card failed, or not present");
+    // don't do anything more:
+    while (1);
+  }
+  Serial.println("card initialized.");
+}
+
+void loop() {
+
+  serial();
+  delay(1000);
+  
+}
+
+void serial(){
+  
+  sensors.requestTemperatures();
+
+  myTime = millis() / 1000;
+  double Tsense1 = analogRead(A0);
+  double Tsense2 = analogRead(A1);
+  double Tsense3 = analogRead(A2);
+  double Tsense4 = analogRead(A3);
+  double Tsense5 = analogRead(A4);
+  double Tsense6 = analogRead(A5);
+
+
+  float Voltage1 = 5.0 / 1023.0 * Tsense1;
+  float Voltage2 = 5.0 / 1023.0 * Tsense2;
+  float Voltage3 = 5.0 / 1023.0 * Tsense3;
+  float Voltage4 = 5.0 / 1023.0 * Tsense4;
+  float Voltage5 = 5.0 / 1023.0 * Tsense5;
+  float Voltage6 = 5.0 / 1023.0 * Tsense6;
+
+  float Temp1 = ConvertToTemp(Voltage1);
+  float Temp2 = ConvertToTemp(Voltage2);
+  float Temp3 = ConvertToTemp(Voltage3);
+  float Temp4 = ConvertToTemp(Voltage4);
+  float Temp5 = ConvertToTemp(Voltage5);
+  float Temp6 = ConvertToTemp(Voltage6);
+
+  float Temp7 = sensors.getTempCByIndex(0);
+  float Temp8 = sensors.getTempCByIndex(1);
+  float Temp9 = sensors.getTempCByIndex(2);
+  float Temp10 = sensors.getTempCByIndex(3);
+  File dataFile = SD.open("Templog.txt", FILE_WRITE);
+  // if the file is available, write to it:
+  if (dataFile) {
+    // Save to SD
+    dataFile.print(myTime);
+    dataFile.print(" ; ");
+    dataFile.print(Temp1);
+    dataFile.print(" ; ");
+    dataFile.print(Temp2);
+    dataFile.print(" ; ");
+    dataFile.print(Temp3);
+    dataFile.print(" ; ");
+    dataFile.print(Temp4);
+    dataFile.print(" ; ");
+    dataFile.print(Temp5);
+    dataFile.print(" ; ");
+    dataFile.print(Temp6);
+    dataFile.print(" ; ");
+    dataFile.print(Temp7);
+    dataFile.print(" ; ");
+    dataFile.print(Temp8);
+    dataFile.print(" ; ");
+    dataFile.print(Temp9);
+    dataFile.print(" ; ");
+    dataFile.println(Temp10);
+    dataFile.close();
+
+    // print to the serial port aswell:
+    Serial.print(myTime);
+    Serial.print(" ; ");
+    Serial.print(Temp1);
+    Serial.print(" ; ");
+    Serial.print(Temp2);
+    Serial.print(" ; ");
+    Serial.print(Temp3);
+    Serial.print(" ; ");
+    Serial.print(Temp4);
+    Serial.print(" ; ");
+    Serial.print(Temp5);
+    Serial.print(" ; ");
+    Serial.print(Temp6);
+    Serial.print(" ; ");
+    Serial.print(Temp7);
+    Serial.print(" ; ");
+    Serial.print(Temp8);
+    Serial.print(" ; ");
+    Serial.print(Temp9);
+    Serial.print(" ; ");
+    Serial.println(Temp10);
+    //Serial.close();
+  }
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening file.txt");
+  }
+}
+
+float ConvertToTemp(double x) {
+  float y = 537.11 * pow(x, 6) - 6749 * pow(x, 5) + 34799 * pow(x, 4) - 94465 * pow(x, 3) + 142663 * pow(x, 2) - 113923 * pow(x, 1) + 37735;
+  return y;
+}
